@@ -1,0 +1,36 @@
+ARG SPARK_IMAGE
+FROM ${SPARK_IMAGE}
+
+USER root
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    procps \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download Hudi jars
+ARG HUDI_VERSION
+RUN mkdir -p /opt/hudi && \
+    wget -P /opt/hudi https://repo1.maven.org/maven2/org/apache/hudi/hudi-spark3-bundle_2.12/${HUDI_VERSION}/hudi-spark3-bundle_2.12-${HUDI_VERSION}.jar
+
+# Add hudi to spark jars
+ENV SPARK_EXTRA_JARS=/opt/hudi/hudi-spark3-bundle_2.12-${HUDI_VERSION}.jar
+ENV SPARK_JARS_PACKAGES=org.apache.hudi:hudi-spark3-bundle_2.12:${HUDI_VERSION}
+
+WORKDIR /dagster/app/
+COPY setup.py pyproject.toml /dagster/app/
+COPY hudi_data_pipeline/__init__.py /dagster/app/
+
+# Install dependencies
+RUN pip install -e .[dev]
+
+COPY ./hudi_data_pipeline/ /dagster/app/
+COPY ./configs/ /dagster/configs/
+
+# Run dagster code server on port 4000
+EXPOSE 4000
+
+# CMD allows this to be overridden from run launchers or executors to execute runs and steps
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "definitions.py"]

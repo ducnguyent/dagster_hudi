@@ -1,0 +1,33 @@
+# Hudi dataset paths
+base_path: "/path/to/hudi/tables"
+
+# Table names
+bronze_table: "bronze_events"
+silver_table: "silver_events"
+gold_table_prefix: "gold"
+
+# Table configurations
+tables:
+  bronze_events:
+    partition_fields: ["dt"]
+    record_key_field: "id"
+    precombine_field: "ts"
+    table_type: "COPY_ON_WRITE"
+  
+  silver_events:
+    partition_fields: ["dt", "category_code"]
+    record_key_field: "id"
+    precombine_field: "ts"
+    table_type: "COPY_ON_WRITE"
+  
+  gold_agg_by_category:
+    partition_fields: ["dt"]
+    record_key_field: "agg_key"
+    precombine_field: "processed_at"
+    table_type: "COPY_ON_WRITE"
+  
+  gold_agg_by_hour:
+    partition_fields: ["dt"]
+    record_key_field: "agg_key"
+    precombine_field: "processed_at"
+    table_type: "COPY_ON_WRITE"

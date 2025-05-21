@@ -1,0 +1,6 @@
+notebook
+jupyter
+pandas
+matplotlib
+psycopg2-binary
+python-dotenv
