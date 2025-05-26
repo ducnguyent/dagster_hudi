@@ -1,7 +1,6 @@
-from typing import List, Dict, Any, Optional
-from pyspark.sql import DataFrame, SparkSession
+from typing import Dict, Any
+from pyspark.sql import DataFrame
 from dagster import ConfigurableResource
-import datetime
 
 class HudiConfigResource(ConfigurableResource):
     """Resource that provides Hudi configuration to assets"""

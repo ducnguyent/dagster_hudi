@@ -31,8 +31,10 @@ The pipeline follows a layered architecture:
 ### Installation
 
 1. Clone the repository:
-`git clone https://github.com/yourusername/hudi-data-pipeline.git`
-`cd hudi-data-pipeline`
+```
+git clone https://github.com/ducnguyent/dagster_hudi.git
+cd dagster_hudi
+```
 
 2. Install dependencies:
 `pip install -e ".[dev]"`
@@ -45,8 +47,9 @@ The pipeline follows a layered architecture:
 `dagit -f hudi_data_pipeline/definitions.py`
 
 2. Or use Docker Compose:
-`cd deployment`
-`docker-compose up`
+```
+bash deploy_local.sh
+```
 
 3. Visit http://localhost:3000 to access the Dagster UI
 
@@ -56,10 +59,13 @@ The pipeline follows a layered architecture:
 
 1. Update the Kubernetes configuration in `deployment/kubernetes/`
 2. Apply the configuration:
-`kubectl apply -f deployment/kubernetes/dagster.yaml`
-`kubectl apply -f deployment/kubernetes/spark-operator.yaml`
+```
+kubectl apply -f deployment/kubernetes/dagster.yaml
+kubectl apply -f deployment/kubernetes/spark-operator.yaml
+```
 
 ## Project Structure
+```
 hudi_data_pipeline/
 ├── assets/               # Data assets (silver, gold)
 ├── jobs/                 # Job definitions
@@ -67,7 +73,7 @@ hudi_data_pipeline/
 ├── schedules/            # Schedule definitions
 ├── utils/                # Utility functions
 └── definitions.py        # Main Dagster definitions
-
+```
 ## Configuration
 
 - Spark configurations in `configs/spark_config.yaml`

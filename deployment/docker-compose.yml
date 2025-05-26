@@ -1,89 +1,9 @@
 version: "3.8"
 
-volumes:
-  pgdata:
-    driver: local
-
 networks:
-  spark_network:
-    driver: bridge
-    name: spark_network
-
-services:
-  postgres:
-    image: ${POSTGRES_IMAGE_NAME}:${POSTGRES_IMAGE_TAG}
-    container_name: postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "${POSTGRES_PORT}:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $POSTGRES_USER -d $POSTGRES_DB']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - spark_network
-
-  spark-master:
-    image: ${SPARK_IMAGE_NAME}:${SPARK_IMAGE_TAG}
-    container_name: spark-master
-    environment:
-      - SPARK_MODE=master
-      - SPARK_MASTER_PORT=${SPARK_MASTER_PORT}
-      - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-    ports:
-      - "${SPARK_MASTER_PORT}:${SPARK_MASTER_PORT}"
-      - "${SPARK_MASTER_WEBUI_PORT}:${SPARK_MASTER_WEBUI_PORT}"
-    networks:
-      - spark_network
-
-  spark-worker:
-    image: ${SPARK_IMAGE_NAME}:${SPARK_IMAGE_TAG}
-    container_name: spark-worker
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
-      - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT}
-    ports:
-      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}"
-    networks:
-      - spark_network
-
-  # jupyter-dev:
-  #   build:
-  #     context: .
-  #     dockerfile: ./jupyter_dev/jupyter.Dockerfile
-  #     args:
-  #       - SPARK_IMAGE=${SPARK_IMAGE_NAME}:${SPARK_IMAGE_TAG}
-  #   container_name: jupyter-dev
-  #   depends_on:
-  #     spark-master:
-  #       condition: service_started
-  #     spark-worker:
-  #       condition: service_started
-  #     postgres:
-  #       condition: service_healthy
-  #   ports:
-  #     - "${JUPYTER_PORT}:8888"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - SPARK_MASTER_URL=spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
-  #   volumes:
-  #     - ./jupyter_dev:/jupyter_dev
-  #   networks:
-  #     - spark_network
+  dagster_hudi_network:
+    external: true
+    name: dagster_hudi_network
 
   # This service runs the gRPC server that loads your user code, in both dagster-webserver
   # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
@@ -91,7 +11,6 @@ services:
   # Multiple containers like this can be deployed separately - each just needs to run on
   # its own port, and have its own entry in the workspace.yaml file that's loaded by the
   # webserver.
-
   dagster_code:
     build:
       context: ..
@@ -108,7 +27,7 @@ services:
       - DAGSTER_CURRENT_IMAGE=dagster_code_image
       - SPARK_MASTER_URL=spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
     networks:
-      - spark_network
+      - dagster_hudi_network
 
   # This service runs dagster-webserver, which loads user code from the user code container.
   dagster_webserver:
@@ -137,7 +56,7 @@ services:
     env_file:
       - .env
     networks:
-      - spark_network
+      - dagster_hudi_network
 
   # This service runs the dagster-daemon process, which is responsible for taking runs
   # off of the queue and launching them, as well as creating runs from schedules or sensors.
@@ -161,19 +80,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
     networks:
-      - spark_network
-
-  minio:
-    image: ${MINIO_IMAGE_NAME}:${MINIO_IMAGE_TAG}
-    container_name: minio_local
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - /tmp/minio_data:/data/minio
-    command: minio server /data/minio --console-address ":9001"
-    ports:
-      - "${MINIO_PORT}:9000"
-      - "9001:9001"
-    networks:
-      - spark_network
+      - dagster_hudi_network

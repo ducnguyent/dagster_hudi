@@ -1,0 +1,92 @@
+version: "3.8"
+
+volumes:
+  pgdata:
+    driver: local
+  portainer_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  dagster_hudi_network:
+    external: true
+    name: dagster_hudi_network
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE_NAME}:${POSTGRES_IMAGE_TAG}
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $POSTGRES_USER -d $POSTGRES_DB']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dagster_hudi_network
+
+  spark-master:
+    image: ${SPARK_IMAGE_NAME}:${SPARK_IMAGE_TAG}
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_PORT=${SPARK_MASTER_PORT}
+      - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "${SPARK_MASTER_PORT}:${SPARK_MASTER_PORT}"
+      - "${SPARK_MASTER_WEBUI_PORT}:${SPARK_MASTER_WEBUI_PORT}"
+    networks:
+      - dagster_hudi_network
+
+  spark-worker:
+    image: ${SPARK_IMAGE_NAME}:${SPARK_IMAGE_TAG}
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
+      - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT}
+    ports:
+      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}"
+    networks:
+      - dagster_hudi_network
+
+  minio:
+    image: ${MINIO_IMAGE_NAME}:${MINIO_IMAGE_TAG}
+    container_name: minio_local
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - /tmp/minio_data:/data/minio
+    command: minio server /data/minio --console-address ":9001"
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "9001:9001"
+    networks:
+      - dagster_hudi_network
+
+  portainer:
+    image: ${PORTAINER_IMAGE_NAME}:${PORTAINER_IMAGE_TAG}
+    container_name: portainer
+    ports:
+      - "${PORTAINER_PORT}:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - dagster_hudi_network

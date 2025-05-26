@@ -2,13 +2,11 @@ from dagster import (
     Definitions, 
     FilesystemIOManager,
     load_assets_from_modules,
-    EnvVar,
     file_relative_path
 )
 import os
 import yaml
 
-# Import components
 from assets import bronze_to_silver, silver_to_gold
 from jobs.hudi_jobs import hudi_processing_job
 from schedules.schedules import five_minute_schedule
@@ -32,11 +30,6 @@ hudi_config_path = os.path.join(config_dir, "hudi_config.yaml")
 spark_config = get_config(spark_config_path)
 hudi_config = get_config(hudi_config_path)
 
-# Get environment variables with defaults
-def get_env_var(key: str, default: str = None) -> str:
-    """Get environment variable with optional default"""
-    return os.getenv(key, default)
-
 # Resources configuration
 resources = {
     "spark_resource": SparkResource(
@@ -53,7 +46,7 @@ resources = {
         tables_config=hudi_config.get("tables", {})
     ),
     "fs_io_manager": FilesystemIOManager(
-        base_dir=get_env_var("DAGSTER_FS_IO_BASE_DIR", "/tmp/dagster/storage")
+        base_dir=os.getenv("DAGSTER_FS_IO_BASE_DIR", "/tmp/dagster/storage")
     )
 }
 

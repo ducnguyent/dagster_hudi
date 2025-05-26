@@ -13,7 +13,8 @@ setup(
         "PyYAML>=6.0",
         "pandas>=1.3.0",
         "python-dotenv",
-        "dagster-aws"
+        "dagster-aws",
+        "dagster-webserver"
     ],
     extras_require={
         "dev": [

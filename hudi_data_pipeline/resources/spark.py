@@ -2,7 +2,7 @@ from dagster import resource, ConfigurableResource
 from pyspark.sql import SparkSession
 import yaml
 import os
-from typing import Dict, Any, Optional
+from typing import Dict
 
 class SparkResource(ConfigurableResource):
     """Resource for managing SparkSession with Hudi configurations"""
