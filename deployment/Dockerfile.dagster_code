@@ -12,12 +12,13 @@ RUN apt-get update && \
 
 # Download Hudi jars
 ARG HUDI_VERSION
+ARG SCALA_VERSION
 RUN mkdir -p /opt/hudi && \
-    wget -P /opt/hudi https://repo1.maven.org/maven2/org/apache/hudi/hudi-spark3-bundle_2.12/${HUDI_VERSION}/hudi-spark3-bundle_2.12-${HUDI_VERSION}.jar
+    wget -P /opt/hudi https://repo1.maven.org/maven2/org/apache/hudi/hudi-spark3-bundle_${SCALA_VERSION}/${HUDI_VERSION}/hudi-spark3-bundle_${SCALA_VERSION}-${HUDI_VERSION}.jar
 
 # Add hudi to spark jars
-ENV SPARK_EXTRA_JARS=/opt/hudi/hudi-spark3-bundle_2.12-${HUDI_VERSION}.jar
-ENV SPARK_JARS_PACKAGES=org.apache.hudi:hudi-spark3-bundle_2.12:${HUDI_VERSION}
+ENV SPARK_EXTRA_JARS=/opt/hudi/hudi-spark3-bundle_${SCALA_VERSION}-${HUDI_VERSION}.jar
+ENV SPARK_JARS_PACKAGES=org.apache.hudi:hudi-spark3-bundle_${SCALA_VERSION}:${HUDI_VERSION}
 
 WORKDIR /dagster/app/
 COPY setup.py pyproject.toml /dagster/app/

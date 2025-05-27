@@ -1,0 +1,6 @@
+import os
+
+SPARK_VERSION = os.getenv("SPARK_VERSION")
+HUDI_VERSION = os.getenv("HUDI_VERSION")
+SCALA_VERSION = os.getenv("SCALA_VERSION")
+

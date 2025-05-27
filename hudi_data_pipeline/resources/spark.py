@@ -8,8 +8,8 @@ class SparkResource(ConfigurableResource):
     """Resource for managing SparkSession with Hudi configurations"""
     spark_config: Dict[str, str]
     app_name: str = "HudiIncrementalPipeline"
-    hudi_version: str = "0.13.0"
-    scala_version: str = "2.12"
+    hudi_version: str = os.getenv("HUDI_VERSION")
+    scala_version: str = os.getenv("SCALA_VERSION")
     enable_hudi: bool = True
     
     def __init__(self, **kwargs):

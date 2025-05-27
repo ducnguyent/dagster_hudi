@@ -1,25 +1,20 @@
 from dagster import (
-    Definitions, 
+    Definitions,
     FilesystemIOManager,
     load_assets_from_modules,
     file_relative_path
 )
 import os
-import yaml
 
 from assets import bronze_to_silver, silver_to_gold
 from jobs.hudi_jobs import hudi_processing_job
 from schedules.schedules import five_minute_schedule
 from resources.spark import SparkResource
 from resources.hudi import HudiConfigResource
+from utils.common import get_config
 
 # Load assets
 assets = load_assets_from_modules([bronze_to_silver, silver_to_gold])
-
-# Load config
-def get_config(path):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
 
 # Path to config files
 config_dir = file_relative_path(__file__, "../configs")
@@ -35,7 +30,7 @@ resources = {
     "spark_resource": SparkResource(
         spark_config=spark_config.get("spark_config", {}),
         app_name=spark_config.get("app_name", "HudiIncrementalPipeline"),
-        hudi_version=spark_config.get("hudi_version", "1.0.2"),
+        hudi_version=spark_config.get("hudi_version"),
         enable_hudi=True
     ),
     "hudi_config": HudiConfigResource(

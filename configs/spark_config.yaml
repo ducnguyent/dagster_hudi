@@ -1,6 +1,4 @@
 app_name: "HudiIncrementalPipeline"
-hudi_version: "1.0.2"
-scala_version: "2.12"
 
 spark_config:
   spark.sql.session.timeZone: "UTC"
